@@ -92,7 +92,7 @@ class TrainTransform:
         # 1 is default mode, no transform
         self.aug_mode = aug_mode
         if self.aug_mode == 1:
-            t = [JitterPoints(sigma=0.001, clip=0.002), RemoveRandomPoints(r=(0.0, 0.1)),
+            t = [RandomRotation(), JitterPoints(sigma=0.001, clip=0.002), RemoveRandomPoints(r=(0.0, 0.1)),
                  RandomTranslation(max_delta=0.01), RemoveRandomBlock(p=0.4)]
         else:
             raise NotImplementedError('Unknown aug_mode: {}'.format(self.aug_mode))
