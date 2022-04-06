@@ -28,7 +28,7 @@ class OxfordDataset(Dataset):
         assert os.path.exists(self.query_filepath), 'Cannot access query file: {}'.format(self.query_filepath)
         self.transform = transform
         self.set_transform = set_transform
-        self.queries: Dict[int, TrainingTuple] = pickle.load(open(self.query_filepath, 'rb'))
+        self.queries: dict[int, TrainingTuple] = pickle.load(open(self.query_filepath, 'rb'))
         self.image_path = image_path
         self.lidar2image_ndx = lidar2image_ndx
         self.image_transform = image_transform
@@ -143,12 +143,21 @@ class RandomFlip:
 
 
 class RandomRotation:
+    """
+    # 随机旋转点云
+    """
     def __init__(self, axis=None, max_theta=180, max_theta2=15):
         self.axis = axis
         self.max_theta = max_theta      # Rotation around axis
         self.max_theta2 = max_theta2    # Smaller rotation in random direction
 
     def _M(self, axis, theta):
+        """
+        # 计算axis和theta下的旋转矩阵\n
+        axis为3维向量，取其归一化值，再乘以旋转角度theta，因此axis / norm(axis) * theta为一个旋转向量。\n
+        numpy.cross 返回两个（数组）向量的叉积。\n
+        expm 使用Pade近似计算矩阵指数。\n
+        """
         return expm(np.cross(np.eye(3), axis / norm(axis) * theta)).astype(np.float32)
 
     def __call__(self, coords):
@@ -158,6 +167,8 @@ class RandomRotation:
             axis = np.random.rand(3) - 0.5
         R = self._M(axis, (np.pi * self.max_theta / 180) * 2 * (np.random.rand(1) - 0.5))
         if self.max_theta2 is None:
+            # python的 @ 除了用在装饰器上，还可以用在矩阵操作。
+            # 效果大概等同于mul，相当于矩阵乘法。
             coords = coords @ R
         else:
             R_n = self._M(np.random.rand(3) - 0.5, (np.pi * self.max_theta2 / 180) * 2 * (np.random.rand(1) - 0.5))
@@ -167,6 +178,9 @@ class RandomRotation:
 
 
 class RandomTranslation:
+    """
+    # 随机平移点云
+    """
     def __init__(self, max_delta=0.05):
         self.max_delta = max_delta
 
@@ -195,6 +209,9 @@ class RandomShear:
 
 
 class JitterPoints:
+    """
+    # 随机抖动点云
+    """
     def __init__(self, sigma=0.01, clip=None, p=1.):
         assert 0 < p <= 1.
         assert sigma > 0.

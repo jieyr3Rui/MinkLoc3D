@@ -1,0 +1,1 @@
+minkloc3d.txt, config_baseline.txt, model_MinkFPN_GeM_20220406_1810, 97.61, 92.79, 93.43, 83.18, 90.59, 80.18, 86.64, 79.99, 92.07, 84.03
