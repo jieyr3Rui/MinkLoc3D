@@ -44,6 +44,7 @@ class OxfordDataset(Dataset):
         # Load point cloud and apply transform
         file_pathname = os.path.join(self.dataset_path, self.queries[ndx].rel_scan_filepath)
         query_pc = self.load_pc(file_pathname)
+        # get_item用的是transform
         if self.transform is not None:
             query_pc = self.transform(query_pc)
 
@@ -68,6 +69,7 @@ class OxfordDataset(Dataset):
 
 
 class TrainingTuple:
+    # 一个保存的训练单元
     # Tuple describing an element for training/validation
     def __init__(self, id: int, timestamp: int, rel_scan_filepath: str, positives: np.ndarray,
                  non_negatives: np.ndarray, position: np.ndarray):
@@ -88,6 +90,10 @@ class TrainingTuple:
 
 
 class TrainTransform:
+    """
+    # 对单个点云进行transform操作
+    调用在datasets/oxford.py的OxfordDataset的__getitem__函数
+    """
     def __init__(self, aug_mode):
         # 1 is default mode, no transform
         self.aug_mode = aug_mode
@@ -105,14 +111,21 @@ class TrainTransform:
 
 
 class TrainSetTransform:
+    """
+    # 对一整个batch的点云作相同的transform
+    注意与TrainTransform的区别
+    调用在datasets/dataset_utils.py的collate_fn函数
+    """
     def __init__(self, aug_mode):
         # 1 is default mode, no transform
         self.aug_mode = aug_mode
         self.transform = None
         # t = [RandomRotation(max_theta=5, max_theta2=0, axis=np.array([0, 0, 1])),
         #      RandomFlip([0.25, 0.25, 0.])]
-        t = [RandomRotation(), JitterPoints(sigma=0.001, clip=0.002), RemoveRandomPoints(r=(0.0, 0.1)),
-                RandomTranslation(max_delta=0.01), RemoveRandomBlock(p=0.4)]
+        # t = [RandomRotation(), JitterPoints(sigma=0.001, clip=0.002), RemoveRandomPoints(r=(0.0, 0.1)),
+        #         RandomTranslation(max_delta=0.01), RemoveRandomBlock(p=0.4)]
+        t = [RandomRotation(),
+             RandomFlip([0.25, 0.25, 0.])]
         self.transform = transforms.Compose(t)
 
     def __call__(self, e):

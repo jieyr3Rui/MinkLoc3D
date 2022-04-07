@@ -27,6 +27,7 @@ def make_datasets(params: MinkLocParams, debug=False):
 
 def make_collate_fn(dataset: OxfordDataset, mink_quantization_size=None):
     # set_transform: the transform to be applied to all batch elements
+    # 自定义dataloder的输出，data_list是OxfordDataset.__getitem__的样本组成的list
     def collate_fn(data_list):
         # Constructs a batch object
         clouds = [e[0] for e in data_list]
@@ -40,17 +41,31 @@ def make_collate_fn(dataset: OxfordDataset, mink_quantization_size=None):
             # Not a MinkowskiEngine based model
             batch = {'cloud': batch}
         else:
+            # Given coordinates, and features (optionally labels), the function generates quantized (voxelized) coordinates.
+            # 给定坐标系和坐标，sparse_quantize生成量化体素化坐标，batch:(batch_size, n_points, 3)
+            # 这里配置文件中的mink_quantization_size=0.01，理解为每个体素0.01m^3
             coords = [ME.utils.sparse_quantize(coordinates=e, quantization_size=mink_quantization_size)
                       for e in batch]
+            # Create a ME.SparseTensor coordinates from a sequence of coordinates
+            # Given a list of either numpy or pytorch tensor coordinates, 
+            # return the batched coordinates suitable for ME.SparseTensor.
+            # coords: [[elemetID, x, y, z]]，这个时候把所有的样本都集中在一个维度
             coords = ME.utils.batched_coordinates(coords)
             # Assign a dummy feature equal to 1 to each point
             # Coords must be on CPU, features can be on GPU - see MinkowskiEngine documentation
+            # Assign a dummy feature equal to 1 to each point 
+            # 为每个点指定一个等于1的虚拟特征
+            # Coords must be on CPU, features can be on GPU - see MinkowskiEngine documentation
+            # feats.shape = (batch_size*n_points, 1)
             feats = torch.ones((coords.shape[0], 1), dtype=torch.float32)
+            # 新的batch组织形式
             batch = {'coords': coords, 'features': feats}
 
         # Compute positives and negatives mask
         # Compute positives and negatives mask
+        # mask是二维数组，bs x bs的01矩阵，反映的是一个batch里面各个样本的positive跟negative的关系
         positives_mask = [[in_sorted_array(e, dataset.queries[label].positives) for e in labels] for label in labels]
+        # 不在non_negatives的就是negatives 
         negatives_mask = [[not in_sorted_array(e, dataset.queries[label].non_negatives) for e in labels] for label in labels]
         positives_mask = torch.tensor(positives_mask)
         negatives_mask = torch.tensor(negatives_mask)

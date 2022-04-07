@@ -45,6 +45,9 @@ class ListDict(object):
 
 
 class BatchSampler(Sampler):
+    # 自定义取样机制，一般默认是随机其取样
+    # 返回的是batch里面每个样本的索引组成的list，然后dataset就会自己根据索引调用OxfordDataset.__getitem__
+    # 这里确保每个batch包含互为positive的样本，这样有利于模型学习
     # Sampler returning list of indices to form a mini-batch
     # Samples elements in groups consisting of k=2 similar elements (positives)
     # Batch has the following structure: item1_1, ..., item1_k, item2_1, ... item2_k, itemn_1, ..., itemn_k
@@ -71,6 +74,7 @@ class BatchSampler(Sampler):
         # Re-generate batches every epoch
         self.generate_batches()
         for batch in self.batch_idx:
+            # 生成器，节省空间
             yield batch
 
     def __len(self):
@@ -89,11 +93,13 @@ class BatchSampler(Sampler):
         self.batch_size = min(self.batch_size, self.batch_size_limit)
         print('=> Batch size increased from: {} to {}'.format(old_batch_size, self.batch_size))
 
+    # 生成一个batch的索引
     def generate_batches(self):
         # Generate training/evaluation batches.
         # batch_idx holds indexes of elements in each batch as a list of lists
         self.batch_idx = []
 
+        # 定义一个未被使用的index，一开始时为所有
         unused_elements_ndx = ListDict(self.elems_ndx)
         current_batch = []
 
@@ -106,22 +112,27 @@ class BatchSampler(Sampler):
                 if len(current_batch) >= 2*self.k:
                     # Ensure there're at least two groups of similar elements, otherwise, it would not be possible
                     # to find negative examples in the batch
+                    # 确保每个batch至少有两组，否则就找不到负样本？为什么是这样找负样本？
                     assert len(current_batch) % self.k == 0, 'Incorrect bach size: {}'.format(len(current_batch))
                     self.batch_idx.append(current_batch)
                     current_batch = []
+                    # 达到最大batch_size
                     if (self.max_batches is not None) and (len(self.batch_idx) >= self.max_batches):
                         break
+                # 把所有idx都输出了一遍，则完成
                 if len(unused_elements_ndx) == 0:
                     break
 
             # Add k=2 similar elements to the batch
+            # 首先随机选一个element，并从unused中去除
             selected_element = unused_elements_ndx.choose_random()
             unused_elements_ndx.remove(selected_element)
+            # 获取该element的positives列表
             positives = self.dataset.get_positives(selected_element)
             if len(positives) == 0:
                 # Broken dataset element without any positives
                 continue
-
+            # 获没有使用过的positives，优先使用这些没使用过的元素
             unused_positives = [e for e in positives if e in unused_elements_ndx]
             # If there're unused elements similar to selected_element, sample from them
             # otherwise sample from all similar elements
@@ -129,8 +140,9 @@ class BatchSampler(Sampler):
                 second_positive = random.choice(unused_positives)
                 unused_elements_ndx.remove(second_positive)
             else:
+                # 实在没有了再=才使用已经用过的
                 second_positive = random.choice(list(positives))
-
+            # 一次加两个，分别是selected和second_positive
             current_batch += [selected_element, second_positive]
 
         for batch in self.batch_idx:
