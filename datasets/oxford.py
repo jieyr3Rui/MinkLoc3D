@@ -109,8 +109,10 @@ class TrainSetTransform:
         # 1 is default mode, no transform
         self.aug_mode = aug_mode
         self.transform = None
-        t = [RandomRotation(max_theta=5, max_theta2=0, axis=np.array([0, 0, 1])),
-             RandomFlip([0.25, 0.25, 0.])]
+        # t = [RandomRotation(max_theta=5, max_theta2=0, axis=np.array([0, 0, 1])),
+        #      RandomFlip([0.25, 0.25, 0.])]
+        t = [RandomRotation(), JitterPoints(sigma=0.001, clip=0.002), RemoveRandomPoints(r=(0.0, 0.1)),
+                RandomTranslation(max_delta=0.01), RemoveRandomBlock(p=0.4)]
         self.transform = transforms.Compose(t)
 
     def __call__(self, e):
