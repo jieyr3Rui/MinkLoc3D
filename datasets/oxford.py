@@ -89,10 +89,31 @@ class TrainingTuple:
         self.position = position
 
 
+class ValTransform:
+    """
+    # 在测试时单个点云进行transform操作
+    调用在datasets/oxford.py的OxfordDataset的__getitem__函数
+    """
+    def __init__(self, aug_mode):
+        # 1 is default mode, no transform
+        self.aug_mode = aug_mode
+        if self.aug_mode == 1:
+            # t = [RandomRotation(), JitterPoints(sigma=0.001, clip=0.002), RemoveRandomPoints(r=(0.0, 0.1)),
+            #      RandomTranslation(max_delta=0.01), RemoveRandomBlock(p=0.4)]
+            t = [RandomRotation()]
+        else:
+            raise NotImplementedError('Unknown aug_mode: {}'.format(self.aug_mode))
+        self.transform = transforms.Compose(t)
+
+    def __call__(self, e):
+        if self.transform is not None:
+            e = self.transform(e)
+        return e
+
 class TrainTransform:
     """
-    # 对单个点云进行transform操作
-    调用在datasets/oxford.py的OxfordDataset的__getitem__函数
+    # 在训练时对单个点云进行transform操作\n
+    调用在datasets/oxford.py的OxfordDataset的__getitem__函数\n
     """
     def __init__(self, aug_mode):
         # 1 is default mode, no transform
@@ -118,14 +139,19 @@ class TrainSetTransform:
     """
     def __init__(self, aug_mode):
         # 1 is default mode, no transform
+        # aug_mode是没用上的，代表这个TrainSetTransform一定会应用在整个batch上
         self.aug_mode = aug_mode
         self.transform = None
+        # 原有的方法，适合PointNetVLAD
+        # 旋转只在z轴旋转 翻转只在x y轴翻转
+        # 强烈说明了MinkLoc3D只适合地地回环，即点云的旋转只绕z轴的情况
         # t = [RandomRotation(max_theta=5, max_theta2=0, axis=np.array([0, 0, 1])),
         #      RandomFlip([0.25, 0.25, 0.])]
-        # t = [RandomRotation(), JitterPoints(sigma=0.001, clip=0.002), RemoveRandomPoints(r=(0.0, 0.1)),
-        #         RandomTranslation(max_delta=0.01), RemoveRandomBlock(p=0.4)]
+        # 模拟地空回环情况
+        # 旋转在3个自由度均有发生
+        # MinkLoc在这种情况下表现一般
         t = [RandomRotation(),
-             RandomFlip([0.25, 0.25, 0.])]
+             RandomFlip([0.25, 0.25, 0.25])]
         self.transform = transforms.Compose(t)
 
     def __call__(self, e):
@@ -135,6 +161,10 @@ class TrainSetTransform:
 
 
 class RandomFlip:
+    """
+    # 随机翻转点云\b
+    p = [p_x, p_y, p_z] 是三个轴翻转的概率\b
+    """
     def __init__(self, p):
         # p = [p_x, p_y, p_z] probability of flipping each axis
         assert len(p) == 3

@@ -220,6 +220,7 @@ def do_train(dataloaders, params: MinkLocParams, debug=False, visualize=False):
     stats = {'train_stats': stats, 'params': params}
 
     # Evaluate the final model
+    # 训练结束后会评估以下网络
     model.eval()
     final_eval_stats = evaluate(model, device, params)
     print('Final model:')

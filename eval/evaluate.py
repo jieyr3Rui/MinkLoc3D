@@ -16,6 +16,8 @@ import random
 from misc.utils import MinkLocParams
 from models.model_factory import model_factory
 
+# 导入ValTransform 
+from datasets.oxford import ValTransform
 
 def evaluate(model, device, params, silent=True):
     # Run evaluation on all eval datasets
@@ -95,10 +97,16 @@ def load_pc(file_name, params):
 def get_latent_vectors(model, set, device, params):
     # Adapted from original PointNetVLAD code
 
+    # 验证的旋转变换
+    valtrans = ValTransform(1)
+
     model.eval()
     embeddings_l = []
     for elem_ndx in set:
         x = load_pc(set[elem_ndx]["query"], params)
+
+        # 尝试在这里对x进行旋转
+        x = valtrans(x)
 
         with torch.no_grad():
             # coords are (n_clouds, num_points, channels) tensor
@@ -111,7 +119,9 @@ def get_latent_vectors(model, set, device, params):
             batch = {'coords': bcoords.to(device), 'features': feats.to(device)}
 
             embedding = model(batch)
-            # embedding is (1, 1024) tensor
+            # embedding is (1, 1024) tensor?
+            # 应该是print(embedding.shape) --> torch.Size([1, 256])
+            # (1, feature_size)
             if params.normalize_embeddings:
                 embedding = torch.nn.functional.normalize(embedding, p=2, dim=1)  # Normalize embeddings
 

@@ -6,7 +6,7 @@ import torch
 from torch.utils.data import DataLoader
 import MinkowskiEngine as ME
 
-from datasets.oxford import OxfordDataset, TrainTransform, TrainSetTransform
+from datasets.oxford import OxfordDataset, TrainTransform, TrainSetTransform, ValTransform
 from datasets.samplers import BatchSampler
 from misc.utils import MinkLocParams
 
@@ -19,6 +19,8 @@ def make_datasets(params: MinkLocParams, debug=False):
 
     datasets['train'] = OxfordDataset(params.dataset_folder, params.train_file, train_transform,
                                       set_transform=train_set_transform)
+
+    # val_transform = ValTransform(params.aug_mode)
     val_transform = None
     if params.val_file is not None:
         datasets['val'] = OxfordDataset(params.dataset_folder, params.val_file, val_transform)
