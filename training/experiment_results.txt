@@ -6,3 +6,4 @@ minkloc3d.txt, config_baseline.txt, model_MinkFPN_GeM_20220407_1121, 97.67, 92.6
 minkloc3d.txt, config_baseline.txt, model_MinkFPN_GeM_20220407_1555, 97.73, 93.05, 93.56, 83.38, 86.90, 77.22, 82.96, 76.05, 90.29, 82.43
 minkloc3d.txt, config_baseline.txt, model_MinkFPN_GeM_20220407_1704, 91.39, 82.18, 95.04, 86.14, 88.98, 79.64, 88.05, 81.85, 90.86, 82.45
 minkloc3d.txt, config_baseline.txt, model_MinkFPN_GeM_20220407_1941, 91.71, 82.90, 95.36, 86.98, 89.98, 81.72, 88.35, 82.65, 91.35, 83.56
+minkloc3d.txt, config_baseline.txt, model_MinkFPN_GeM_20220408_1545, 97.53, 92.74, 95.17, 84.54, 90.66, 79.37, 85.38, 78.40, 92.19, 83.76

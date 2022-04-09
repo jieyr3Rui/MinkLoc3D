@@ -1,7 +1,7 @@
 [DEFAULT]
 num_points = 4096
 
-dataset_folder = /nas/slam/datasets/PointNetVALD/benchmark_datasets
+dataset_folder = /nas/slam/datasets/PointNetVLAD/DataMinkLoc3D
 
 [TRAIN]
 num_workers = 4

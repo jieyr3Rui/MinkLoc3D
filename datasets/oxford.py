@@ -92,7 +92,8 @@ class TrainingTuple:
 class ValTransform:
     """
     # 在测试时单个点云进行transform操作
-    调用在datasets/oxford.py的OxfordDataset的__getitem__函数
+    只作so3的随机旋转
+    调用在eval/evaluate.py中的get_latent_vector函数
     """
     def __init__(self, aug_mode):
         # 1 is default mode, no transform
@@ -100,6 +101,7 @@ class ValTransform:
         if self.aug_mode == 1:
             # t = [RandomRotation(), JitterPoints(sigma=0.001, clip=0.002), RemoveRandomPoints(r=(0.0, 0.1)),
             #      RandomTranslation(max_delta=0.01), RemoveRandomBlock(p=0.4)]
+            # t = [RandomRotation(max_theta=5, max_theta2=0, axis=np.array([0, 0, 1]))]
             t = [RandomRotation()]
         else:
             raise NotImplementedError('Unknown aug_mode: {}'.format(self.aug_mode))
@@ -151,7 +153,8 @@ class TrainSetTransform:
         # 旋转在3个自由度均有发生
         # MinkLoc在这种情况下表现一般
         t = [RandomRotation(),
-             RandomFlip([0.25, 0.25, 0.25])]
+             RandomFlip([0.25, 0.25, 0.25])]  
+
         self.transform = transforms.Compose(t)
 
     def __call__(self, e):
