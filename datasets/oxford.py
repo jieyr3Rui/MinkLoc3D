@@ -101,8 +101,13 @@ class ValTransform:
         if self.aug_mode == 1:
             # t = [RandomRotation(), JitterPoints(sigma=0.001, clip=0.002), RemoveRandomPoints(r=(0.0, 0.1)),
             #      RandomTranslation(max_delta=0.01), RemoveRandomBlock(p=0.4)]
-            # t = [RandomRotation(max_theta=5, max_theta2=0, axis=np.array([0, 0, 1]))]
-            t = [RandomRotation()]
+
+            t = [
+                # so3旋转
+                RandomRotation(),
+                # z旋转
+                # RandomRotation(max_theta2=0, axis=np.array([0, 0, 1])),
+            ]
         else:
             raise NotImplementedError('Unknown aug_mode: {}'.format(self.aug_mode))
         self.transform = transforms.Compose(t)
@@ -121,8 +126,20 @@ class TrainTransform:
         # 1 is default mode, no transform
         self.aug_mode = aug_mode
         if self.aug_mode == 1:
-            t = [RandomRotation(), JitterPoints(sigma=0.001, clip=0.002), RemoveRandomPoints(r=(0.0, 0.1)),
-                 RandomTranslation(max_delta=0.01), RemoveRandomBlock(p=0.4)]
+            t = [
+                # z轴旋转
+                # RandomRotation(axis=np.array([0,0,1]), max_theta2=0), 
+                # 绕z轴旋转
+                RandomRotation(axis=np.array([0,0,1]), max_theta=180, max_theta2=0),
+                # 绕x轴随机旋转10度以内
+                RandomRotation(axis=np.array([1,0,0]), max_theta=10, max_theta2=0), 
+                # 绕y轴随机旋转10度以内
+                RandomRotation(axis=np.array([0,1,0]), max_theta=10, max_theta2=0), 
+                JitterPoints(sigma=0.001, clip=0.002), 
+                RemoveRandomPoints(r=(0.0, 0.1)),
+                RandomTranslation(max_delta=0.01), 
+                RemoveRandomBlock(p=0.4)
+            ]
         else:
             raise NotImplementedError('Unknown aug_mode: {}'.format(self.aug_mode))
         self.transform = transforms.Compose(t)
@@ -143,7 +160,7 @@ class TrainSetTransform:
         # 1 is default mode, no transform
         # aug_mode是没用上的，代表这个TrainSetTransform一定会应用在整个batch上
         self.aug_mode = aug_mode
-        self.transform = None
+        # self.transform = None
         # 原有的方法，适合PointNetVLAD
         # 旋转只在z轴旋转 翻转只在x y轴翻转
         # 强烈说明了MinkLoc3D只适合地地回环，即点云的旋转只绕z轴的情况
@@ -152,8 +169,13 @@ class TrainSetTransform:
         # 模拟地空回环情况
         # 旋转在3个自由度均有发生
         # MinkLoc在这种情况下表现一般
-        t = [RandomRotation(),
-             RandomFlip([0.25, 0.25, 0.25])]  
+        t = [
+            # z轴旋转
+            # RandomRotation(axis=np.array([0,0,1]), max_theta2=0), 
+            # so3旋转
+            # RandomRotation(),
+            RandomFlip([0.25, 0.25, 0])
+        ]  
 
         self.transform = transforms.Compose(t)
 
@@ -193,6 +215,9 @@ class RandomFlip:
 class RandomRotation:
     """
     # 随机旋转点云
+    axis=None 指定的旋转轴 默认为None
+    max_theta=180 按指定旋转轴的最大旋转角度
+    max_theta2=15 按随机旋转轴的最大旋转角度
     """
     def __init__(self, axis=None, max_theta=180, max_theta2=15):
         self.axis = axis

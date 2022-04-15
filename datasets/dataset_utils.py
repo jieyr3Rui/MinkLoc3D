@@ -20,8 +20,8 @@ def make_datasets(params: MinkLocParams, debug=False):
     datasets['train'] = OxfordDataset(params.dataset_folder, params.train_file, train_transform,
                                       set_transform=train_set_transform)
 
-    # val_transform = ValTransform(params.aug_mode)
-    val_transform = None
+    val_transform = ValTransform(params.aug_mode)
+    # val_transform = None
     if params.val_file is not None:
         datasets['val'] = OxfordDataset(params.dataset_folder, params.val_file, val_transform)
     return datasets
