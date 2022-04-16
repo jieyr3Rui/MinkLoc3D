@@ -104,9 +104,9 @@ class ValTransform:
 
             t = [
                 # so3旋转
-                RandomRotation(),
+                # RandomRotation(),
                 # z旋转
-                # RandomRotation(max_theta2=0, axis=np.array([0, 0, 1])),
+                RandomRotation(max_theta2=0, axis=np.array([0, 0, 1])),
             ]
         else:
             raise NotImplementedError('Unknown aug_mode: {}'.format(self.aug_mode))
