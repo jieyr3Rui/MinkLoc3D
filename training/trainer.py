@@ -152,7 +152,7 @@ def do_train(dataloaders, params: MinkLocParams, debug=False, visualize=False):
 
                 with torch.set_grad_enabled(phase == 'train'):
                     # Compute embeddings of all elements
-                    embeddings = model(batch)
+                    embeddings, weight = model(batch)
                     loss, temp_stats, _ = loss_fn(embeddings, positives_mask, negatives_mask)
 
                     temp_stats = tensors_to_numbers(temp_stats)

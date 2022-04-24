@@ -3,6 +3,7 @@
 
 # Evaluation code adapted from PointNetVlad code: https://github.com/mikacuy/pointnetvlad
 
+from time import sleep
 from sklearn.neighbors import KDTree
 import numpy as np
 import pickle
@@ -106,7 +107,7 @@ def get_latent_vectors(model, set, device, params):
         x = load_pc(set[elem_ndx]["query"], params)
 
         # 尝试在这里对x进行旋转
-        x = valtrans(x)
+        # x = valtrans(x)
 
         with torch.no_grad():
             # coords are (n_clouds, num_points, channels) tensor
@@ -118,7 +119,7 @@ def get_latent_vectors(model, set, device, params):
             feats = torch.ones((bcoords.shape[0], 1), dtype=torch.float32)
             batch = {'coords': bcoords.to(device), 'features': feats.to(device)}
 
-            embedding = model(batch)
+            embedding, weight = model(batch)
             # embedding is (1, 1024) tensor?
             # 应该是print(embedding.shape) --> torch.Size([1, 256])
             # (1, feature_size)

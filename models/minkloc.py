@@ -6,6 +6,7 @@ import MinkowskiEngine as ME
 
 from models.minkfpn import MinkFPN
 from models.netvlad import MinkNetVladWrapper
+from models.attention import PointWiseAttention
 import layers.pooling as pooling
 
 
@@ -35,10 +36,16 @@ class MinkLoc(torch.nn.Module):
         else:
             raise NotImplementedError('Model not implemented: {}'.format(model))
 
+        self.attention = PointWiseAttention(in_channel=feature_size, out_channel=1)
+
     def forward(self, batch):
         # Coords must be on CPU, features can be on GPU - see MinkowskiEngine documentation
         x = ME.SparseTensor(batch['features'], coordinates=batch['coords'])
         x = self.backbone(x)
+
+        # attention 模块
+        weight = self.attention(x)
+        x = x * weight
 
         # x is (num_points, n_features) tensor
         assert x.shape[1] == self.feature_size, 'Backbone output tensor has: {} channels. Expected: {}'.format(x.shape[1], self.feature_size)
@@ -46,7 +53,9 @@ class MinkLoc(torch.nn.Module):
         assert x.dim() == 2, 'Expected 2-dimensional tensor (batch_size,output_dim). Got {} dimensions.'.format(x.dim())
         assert x.shape[1] == self.output_dim, 'Output tensor has: {} channels. Expected: {}'.format(x.shape[1], self.output_dim)
         # x is (batch_size, output_dim) tensor
-        return x
+
+        # 输出每个点的权重
+        return x, weight
 
     def print_info(self):
         print('Model class: MinkLoc')

@@ -14,3 +14,5 @@ minkloc3d.txt, config_baseline.txt, model_MinkFPN_GeM_20220415_1822, 27.45, 13.8
 minkloc3d.txt, config_baseline.txt, model_MinkFPN_GeM_20220415_2113, 13.15, 6.06, 12.38, 5.03, 9.88, 5.51, 10.98, 7.37, 11.60, 5.99
 minkloc3d.txt, config_baseline.txt, model_MinkFPN_GeM_20220422_1142, 21.67, 11.54, 20.36, 10.44, 19.96, 12.57, 22.15, 16.17, 21.04, 12.68
 minkloc3dVLAD.txt, config_baseline.txt, model_MinkFPN_NetVlad_20220422_1556, 20.34, 10.32, 23.01, 11.48, 20.09, 12.71, 18.77, 12.74, 20.55, 11.81
+minkloc3d.txt, config_baseline.txt, model_MinkFPN_GeM_20220424_1102, 22.08, 11.71, 21.39, 10.82, 21.11, 13.31, 21.44, 15.90, 21.50, 12.93
+minkloc3d.txt, config_baseline.txt, model_MinkFPN_GeM_20220424_1148, 95.39, 86.39, 90.72, 76.62, 89.38, 76.80, 87.60, 79.83, 90.77, 79.91
