@@ -6,7 +6,7 @@ import MinkowskiEngine as ME
 
 from models.minkfpn import MinkFPN
 from models.netvlad import MinkNetVladWrapper
-from models.attention import PointWiseAttention, PointFeatWiseAttention
+from models.attention import PointWiseAttention, PointFeatWiseAttention, PointConvAttention
 import layers.pooling as pooling
 
 
@@ -36,7 +36,7 @@ class MinkLoc(torch.nn.Module):
         else:
             raise NotImplementedError('Model not implemented: {}'.format(model))
 
-        self.attention = PointFeatWiseAttention(in_channel=feature_size, out_channel=feature_size)
+        self.attention = PointConvAttention(in_channel=feature_size, out_channel=1)
 
     def forward(self, batch):
         # Coords must be on CPU, features can be on GPU - see MinkowskiEngine documentation

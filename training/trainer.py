@@ -211,11 +211,10 @@ def do_train(dataloaders, params: MinkLocParams, debug=False, visualize=False):
                 if rnz < params.batch_expansion_th:
                     dataloaders['train'].batch_sampler.expand_batch()
 
-    print('')
-
-    # Save final model weights
-    final_model_path = model_pathname + '_final.pth'
-    torch.save(model.state_dict(), final_model_path)
+        print('')
+        # Save final model weights
+        final_model_path = model_pathname + '_final.pth'
+        torch.save(model.state_dict(), final_model_path)
 
     stats = {'train_stats': stats, 'params': params}
 
