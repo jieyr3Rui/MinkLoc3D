@@ -6,12 +6,12 @@ dataset_folder = /nas/slam/datasets/PointNetVLAD/DataMinkLoc3D
 [TRAIN]
 num_workers = 4
 batch_size = 16
-batch_size_limit = 256
+batch_size_limit = 128
 batch_expansion_rate = 1.4
 batch_expansion_th = 0.7
 
 lr = 1e-3
-epochs = 40
+epochs = 60
 scheduler_milestones = 30
 
 aug_mode = 1

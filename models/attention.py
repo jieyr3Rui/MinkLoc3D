@@ -49,16 +49,11 @@ class PointFeatWiseAttention(ME.MinkowskiNetwork):
             ME.MinkowskiReLU(),
         )
         self.conv2 = nn.Sequential(
-            ME.MinkowskiLinear(512, 1024, bias=False),
-            ME.MinkowskiBatchNorm(1024),
-            ME.MinkowskiReLU(),
-        )
-        self.conv3 = nn.Sequential(
-            ME.MinkowskiLinear(1024, 512, bias=False),
+            ME.MinkowskiLinear(512, 512, bias=False),
             ME.MinkowskiBatchNorm(512),
             ME.MinkowskiReLU(),
         )
-        self.conv4 = nn.Sequential(
+        self.conv3 = nn.Sequential(
             ME.MinkowskiLinear(512, out_channel, bias=False),
             ME.MinkowskiBatchNorm(out_channel),
             # [0,1] 的权重
@@ -69,8 +64,7 @@ class PointFeatWiseAttention(ME.MinkowskiNetwork):
     def forward(self, pcfeats: ME.TensorField):
         x = self.conv1(pcfeats)
         x = self.conv2(x)
-        x = self.conv3(x)
-        weight = self.conv4(x)
+        weight = self.conv3(x)
         return weight
 
 
