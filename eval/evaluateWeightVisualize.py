@@ -130,7 +130,7 @@ def get_latent_vectors(model, set, device, params):
             weights = np.array(list_of_feats[0].cpu()*100).T[0]
             min_v = min(weights)
             max_v = max(weights)
-            color = [plt.get_cmap("seismic", 100)(int(i)) for i in weights]
+            color = [plt.get_cmap("rainbow", 100)(int(i)) for i in weights]
             rawpc = np.array(x).T
 
 
@@ -141,7 +141,7 @@ def get_latent_vectors(model, set, device, params):
             plt.title("Pointcloud", color="blue", fontsize=30)
 
             ax = plt.subplot(1,2, 2, projection = '3d')
-            plt.set_cmap(plt.get_cmap("seismic", 100))
+            plt.set_cmap(plt.get_cmap("rainbow", 100)) # jet, rainbow
             im = ax.scatter(coords[0], coords[1], coords[2], color=color, marker="o")
             fig.colorbar(im, format=matplotlib.ticker.FuncFormatter(lambda x, pos:int(x*(100))))
 

@@ -117,6 +117,9 @@ def do_train(dataloaders, params: MinkLocParams, debug=False, visualize=False):
     # Training statistics
     stats = {'train': [], 'val': [], 'eval': []}
 
+    # 记录当前最小的Loss，用于保存权重
+    minValLoss = 10000.0
+
     for epoch in tqdm.tqdm(range(1, params.epochs + 1)):
         for phase in phases:
             if phase == 'train':
@@ -176,6 +179,14 @@ def do_train(dataloaders, params: MinkLocParams, debug=False, visualize=False):
             stats[phase].append(epoch_stats)
             print_stats(epoch_stats, phase)
 
+            # 保存最优模型
+            if phase == 'val' and epoch_stats['loss'] < minValLoss:
+                minValLoss = epoch_stats['loss']
+                print("Get min val loss: {}, save a best model.".format(epoch_stats['loss']))
+                final_model_path = model_pathname + '_best.pth'
+                torch.save(model.state_dict(), final_model_path)  
+
+
         # ******* EPOCH END *******
 
         if scheduler is not None:
@@ -211,6 +222,7 @@ def do_train(dataloaders, params: MinkLocParams, debug=False, visualize=False):
                 if rnz < params.batch_expansion_th:
                     dataloaders['train'].batch_sampler.expand_batch()
 
+        # 保存最后的模型
         print('')
         # Save final model weights
         final_model_path = model_pathname + '_final.pth'
@@ -219,7 +231,7 @@ def do_train(dataloaders, params: MinkLocParams, debug=False, visualize=False):
     stats = {'train_stats': stats, 'params': params}
 
     # Evaluate the final model
-    # 训练结束后会评估以下网络
+    # 训练结束后会评估网络
     model.eval()
     final_eval_stats = evaluate(model, device, params)
     print('Final model:')

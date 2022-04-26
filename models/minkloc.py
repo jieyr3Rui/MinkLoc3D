@@ -36,7 +36,7 @@ class MinkLoc(torch.nn.Module):
         else:
             raise NotImplementedError('Model not implemented: {}'.format(model))
 
-        self.attention = PointConvAttention(in_channel=feature_size, out_channel=1)
+        self.attention = PointWiseAttention(in_channel=feature_size, out_channel=1)
 
     def forward(self, batch):
         # Coords must be on CPU, features can be on GPU - see MinkowskiEngine documentation

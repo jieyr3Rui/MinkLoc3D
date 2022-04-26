@@ -19,7 +19,7 @@ weight_decay = 1e-3
 
 loss = BatchHardTripletMarginLoss
 normalize_embeddings = False
-margin = 0.2
+margin = 0.15
 
 train_file = training_queries_baseline.pickle
 val_file = test_queries_baseline.pickle
