@@ -1,0 +1,9 @@
+20220426_110917
+FC pointwise attention  
+margin=0.20 -> margin=0.15
+95.34  84.09 89.92  91.62
+
+20220426_112719
+FC pointwise attention  
+margin=0.20 -> margin=0.25
+96.04  84.50  87.36  92.59

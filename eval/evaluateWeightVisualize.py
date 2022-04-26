@@ -138,14 +138,14 @@ def get_latent_vectors(model, set, device, params):
 
             ax = plt.subplot(1,2, 1, projection = '3d')
             ax.scatter(rawpc[0], rawpc[1], rawpc[2], color="blue", marker=".")
-            plt.title("Pointcloud", color="blue", fontsize=30)
+            plt.title("Pointcloud", fontsize=30)
 
             ax = plt.subplot(1,2, 2, projection = '3d')
             plt.set_cmap(plt.get_cmap("rainbow", 100)) # jet, rainbow
             im = ax.scatter(coords[0], coords[1], coords[2], color=color, marker="o")
             fig.colorbar(im, format=matplotlib.ticker.FuncFormatter(lambda x, pos:int(x*(100))))
 
-            plt.title("Attention Map", color="blue", fontsize=30)
+            plt.title("Attention Map", fontsize=30)
             # plt.show()
             plt.savefig("/home/jieyr/code/MinkLoc3D/eval/image/result.png")
             sleep(5)
