@@ -1,9 +1,9 @@
-20220426_110917
-FC pointwise attention  
-margin=0.20 -> margin=0.15
-95.34  84.09 89.92  91.62
-
-20220426_112719
-FC pointwise attention  
-margin=0.20 -> margin=0.25
-96.04  84.50  87.36  92.59
+model             margin   batch_size   attention                training_augment    none eval
+base              0.20     256          none                     base                97.90 88.50 91.20 95.00
+20220428_131122   0.20     256          none                     base                97.80 86.11 88.17 94.01
+20220426_110917   0.15     128          fc_pointwise_attention   base                95.34 84.09 89.92 91.62
+20220426_112719   0.25     128          fc_pointwise_attention   base                96.04 84.50 87.36 92.59
+20220426_649707   0.20     256          fc_pointwise_attention   z:180&xy:5+5        96.99 86.31 87.78 92.78
+20220426_192512   0.20     256          fc_pointwise_attention   z:180&xy:0+10       94.24 86.46 89.59 92.65
+20220428_103256   0.20     256          none                     z:180&xy:0+10       96.68 86.37 87.83 93.24
+20220429_110755   0.20     256          none                     z:180&xy:0+10       97.09 84.78 89.25 93.17

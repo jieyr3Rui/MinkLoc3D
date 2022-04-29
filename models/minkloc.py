@@ -44,8 +44,8 @@ class MinkLoc(torch.nn.Module):
         x = self.backbone(x)
 
         # attention 模块
-        weight = self.attention(x)
-        x = x * weight
+        # weight = self.attention(x)
+        # x = x * weight
 
         # x is (num_points, n_features) tensor
         assert x.shape[1] == self.feature_size, 'Backbone output tensor has: {} channels. Expected: {}'.format(x.shape[1], self.feature_size)
@@ -55,7 +55,7 @@ class MinkLoc(torch.nn.Module):
         # x is (batch_size, output_dim) tensor
 
         # 输出每个点的权重
-        return x, weight
+        return x, None
 
     def print_info(self):
         print('Model class: MinkLoc')
