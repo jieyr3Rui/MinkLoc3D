@@ -132,7 +132,7 @@ dmypy.json
 .idea
 
 # 权重
-# weights/*
+weights/model*
 
 # 训练过程
 tf_logs/2022*
