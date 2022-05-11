@@ -21,6 +21,16 @@ from models.model_factory import model_factory
 from datasets.oxford import ValTransform
 
 def evaluate(model, device, params, silent=True):
+    """
+    # 测试所有数据集
+
+    self.eval_database_files = ['oxford_evaluation_database.pickle', 'business_evaluation_database.pickle',
+                                'residential_evaluation_database.pickle', 'university_evaluation_database.pickle']
+
+    self.eval_query_files = ['oxford_evaluation_query.pickle', 'business_evaluation_query.pickle',
+                                'residential_evaluation_query.pickle', 'university_evaluation_query.pickle']
+
+    """
     # Run evaluation on all eval datasets
     assert len(params.eval_database_files) == len(params.eval_query_files)
 
@@ -58,16 +68,26 @@ def evaluate_dataset(model, device, params, database_sets, query_sets, silent=Tr
 
     model.eval()
 
+    print("computing database_embeddings ...")
     for set in tqdm.tqdm(database_sets, disable=silent):
         database_embeddings.append(get_latent_vectors(model, set, device, params))
 
+    print("computing query_embeddings ...")
     for set in tqdm.tqdm(query_sets, disable=silent):
         query_embeddings.append(get_latent_vectors(model, set, device, params))
 
+
+    # 只迭代query_sets 自身和自身
+    # len(query_sets) = 23 # oxford
+    # len(query_sets) = 5  # others
     for i in range(len(query_sets)):
         for j in range(len(query_sets)):
+            # 除去自身
             if i == j:
                 continue
+            # pair_recall np.array 是(25,)的数组 存avg recall @N (1~25)
+            # pair_similarity list 是TP情况下的top1相似度
+            # pair_opr是 recall @1% 
             pair_recall, pair_similarity, pair_opr = get_recall(i, j, database_embeddings, query_embeddings, query_sets,
                                                                 database_sets)
             recall += np.array(pair_recall)
@@ -134,43 +154,72 @@ def get_latent_vectors(model, set, device, params):
 
 
 def get_recall(m, n, database_vectors, query_vectors, query_sets, database_sets):
+    """
+    # 计算recall@%1
+    """
     # Original PointNetVLAD code
+    # database和query分别来自m, n采集序列
     database_output = database_vectors[m]
     queries_output = query_vectors[n]
+    
+    # print("database_output queries_output", len(database_output), len(queries_output))
+    # database_output queries_output 440 120
+    # 440 120 代表子图的个数
 
     # When embeddings are normalized, using Euclidean distance gives the same
     # nearest neighbour search results as using cosine distance
+    # 特征上的KDTree
     database_nbrs = KDTree(database_output)
 
+    # 相邻的数量？
     num_neighbors = 25
+    # recall 记录特征最近的前25个子图的recall
     recall = [0] * num_neighbors
 
+    # top%1的相似分数
     top1_similarity_score = []
+    # top%1的检索数量
     one_percent_retrieved = 0
+    # 阈值 = database的子图数量除以100取整 代表了top%1的数量
     threshold = max(int(round(len(database_output)/100.0)), 1)
 
+    # 评估的数量
     num_evaluated = 0
     for i in range(len(queries_output)):
         # i is query element ndx
-        query_details = query_sets[n][i]    # {'query': path, 'northing': , 'easting': }
+        query_details = query_sets[n][i]    # {'query': path, 'northing': , 'easting': , 0:[], 1:[]}
+        # 真正在m中的邻居 记录于生成数据的时候
         true_neighbors = query_details[m]
         if len(true_neighbors) == 0:
             continue
         num_evaluated += 1
+        # 找与queries_output[i]最近的25个database的索引
         distances, indices = database_nbrs.query(np.array([queries_output[i]]), k=num_neighbors)
-
+        # indices[0]是最近的25个索引值
         for j in range(len(indices[0])):
+            # j在true_neighbors里面
             if indices[0][j] in true_neighbors:
+                # j == 0 是最接近的那个子图 记为top1_similarity_score
                 if j == 0:
                     similarity = np.dot(queries_output[i], database_output[indices[0][j]])
                     top1_similarity_score.append(similarity)
                 recall[j] += 1
+                # 一旦找到一个nbr则退出
                 break
-
+        # intersection 将两个集合的交集作为新集合返回
+        # 取indices的前threshold个子图索引与真实的匹配的true_neighbors作交集
+        # 交集不为空则视为recall@%1成功！
         if len(list(set(indices[0][0:threshold]).intersection(set(true_neighbors)))) > 0:
             one_percent_retrieved += 1
 
+    # print("num_evaluated", num_evaluated)
+    # print("one_percent_retrieved", one_percent_retrieved)
+    # print("recall", recall)
+    # num_evaluated 150
+    # one_percent_retrieved 147
+    # recall [138, 6, 3, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
     one_percent_recall = (one_percent_retrieved/float(num_evaluated))*100
+    # 累积和 cumsum: Return the cumulative sum of the elements along a given axis.
     recall = (np.cumsum(recall)/float(num_evaluated))*100
     return recall, top1_similarity_score, one_percent_recall
 
