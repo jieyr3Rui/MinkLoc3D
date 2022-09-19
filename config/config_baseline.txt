@@ -1,11 +1,11 @@
 [DEFAULT]
 num_points = 4096
 
-dataset_folder = /nas/slam/datasets/PointNetVLAD/DataMinkLoc3D
+dataset_folder = /nas/slam/datasets/PointNetVLAD/DataPPR
 
 [TRAIN]
 num_workers = 4
-batch_size = 16
+batch_size = 8
 batch_size_limit = 128
 batch_expansion_rate = 1.4
 batch_expansion_th = 0.7

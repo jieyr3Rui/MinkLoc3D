@@ -702,6 +702,196 @@ class MinkPyramid(ME.MinkowskiNetwork):
 
         return feats, None
 
+class MinkPyramidDirect(ME.MinkowskiNetwork):
+    def __init__(self,
+            in_channels=1,
+            feature_size=256,
+            bn_momentum=0.1,
+            D=3
+        ):
+        ME.MinkowskiNetwork.__init__(self, D)
+
+        # 1024×64, 256×128, 64×256, and 16×512,
+        CHANNELS    = [32, 32, 64, 64]
+
+
+        self.relu = ME.MinkowskiReLU()
+
+        # 0层卷积 对1通道的输入卷积成32通道特征
+        self.conv0 = ME.MinkowskiConvolution(
+            in_channels=in_channels,
+            out_channels=CHANNELS[0],
+            kernel_size=5,
+            stride=1,
+            dilation=1,
+            bias=False,
+            dimension=D,
+        )
+        self.norm0  = ME.MinkowskiBatchNorm(CHANNELS[0])
+
+        # conv1
+        self.conv1 = ME.MinkowskiConvolution(
+            in_channels=CHANNELS[0],
+            out_channels=CHANNELS[1],
+            kernel_size=2,
+            stride=2,
+            dilation=1,
+            bias=False,
+            dimension=D
+        )
+        self.norm1  = ME.MinkowskiBatchNorm(CHANNELS[1])
+        self.block1 = BasicBlockBN(
+            inplanes=CHANNELS[1], 
+            planes=CHANNELS[1], 
+            stride=1, 
+            dilation=1, 
+            downsample=None, 
+            bn_momentum=0.1, 
+            D=3
+        )
+
+
+        # conv2
+        self.conv2 = ME.MinkowskiConvolution(
+            in_channels=CHANNELS[1],
+            out_channels=CHANNELS[2],
+            kernel_size=2,
+            stride=2,
+            dilation=1,
+            bias=False,
+            dimension=D
+        )
+        self.norm2  = ME.MinkowskiBatchNorm(CHANNELS[2])
+        self.block2 = BasicBlockBN(
+            inplanes=CHANNELS[2], 
+            planes=CHANNELS[2], 
+            stride=1, 
+            dilation=1, 
+            downsample=None, 
+            bn_momentum=0.1, 
+            D=3
+        )
+
+        self.conv2_1x1 = ME.MinkowskiConvolution(
+            in_channels=CHANNELS[2],
+            out_channels=feature_size,
+            kernel_size=1,
+            stride=1,
+            dilation=1,
+            bias=False,
+            dimension=D
+        )
+
+        # conv3
+        self.conv3 = ME.MinkowskiConvolution(
+            in_channels=CHANNELS[2],
+            out_channels=CHANNELS[3],
+            kernel_size=2,
+            stride=2,
+            dilation=1,
+            bias=False,
+            dimension=D
+        )
+        self.norm3  = ME.MinkowskiBatchNorm(CHANNELS[3])
+        self.block3 = BasicBlockBN(
+            inplanes=CHANNELS[3], 
+            planes=CHANNELS[3], 
+            stride=1, 
+            dilation=1, 
+            downsample=None, 
+            bn_momentum=0.1, 
+            D=3
+        )
+
+        self.conv3_1x1 = ME.MinkowskiConvolution(
+            in_channels=CHANNELS[3],
+            out_channels=feature_size,
+            kernel_size=1,
+            stride=1,
+            dilation=1,
+            bias=False,
+            dimension=D
+        )
+
+        # 反卷积
+        self.conv3_tr = ME.MinkowskiConvolutionTranspose(
+            in_channels=feature_size,
+            out_channels=feature_size,
+            kernel_size=2,
+            stride=2,
+            dilation=1,
+            bias=False,
+            dimension=D)
+
+        # pooling层
+        self.pool0 = GeM()
+        self.pool1 = GeM()
+        self.pool2 = GeM()
+        self.pool3 = GeM()
+
+        self.mlp = nn.Sequential(
+            nn.Linear(192, 512),
+            nn.BatchNorm1d(512),
+            nn.ReLU(),
+            nn.Linear(512, 256),
+            nn.Sigmoid()
+        )
+
+        # 权重初始化，有用
+        self.weight_initialization()
+
+    def weight_initialization(self):
+        for m in self.modules():
+            if isinstance(m, ME.MinkowskiConvolution):
+                ME.utils.kaiming_normal_(m.kernel, mode='fan_out', nonlinearity='relu')
+
+            if isinstance(m, ME.MinkowskiConvolutionTranspose):
+                ME.utils.kaiming_normal_(m.kernel, mode='fan_out', nonlinearity='relu')
+
+            if isinstance(m, ME.MinkowskiBatchNorm):
+                nn.init.constant_(m.bn.weight, 1)
+                nn.init.constant_(m.bn.bias, 0)
+
+    def forward(self, batch):
+        x = ME.SparseTensor(batch['features'], coordinates=batch['coords'])
+        # x = batch
+        xconv0 = self.conv0(x)
+        xconv0 = self.norm0(xconv0)
+        xconv0 = self.relu(xconv0)
+        
+        # print("xconv0 ", xconv0.F.size())
+
+        xconv1 = self.conv1(xconv0)
+        xconv1 = self.norm1(xconv1)
+        xconv1 = self.relu(xconv1)
+        xconv1 = self.block1(xconv1)
+        # print("xconv1 ", xconv1.F.size())
+
+        xconv2 = self.conv2(xconv1)
+        xconv2 = self.norm2(xconv2)
+        xconv2 = self.relu(xconv2)
+        xconv2 = self.block2(xconv2)
+        # print("xconv2 ", xconv2.F.size())
+
+
+        xconv3 = self.conv3(xconv2)
+        xconv3 = self.norm3(xconv3)
+        xconv3 = self.relu(xconv3)
+        xconv3 = self.block3(xconv3)
+        # print("xconv3 ", xconv3.F.size())
+
+        xconv0 = self.pool0(xconv0)
+        xconv1 = self.pool0(xconv1)
+        xconv2 = self.pool0(xconv2)
+        xconv3 = self.pool0(xconv3)
+
+        feats = torch.cat([xconv0, xconv1, xconv2, xconv3], dim=1)
+        feats = self.mlp(feats)
+
+        return feats, None
+
+
+
 def testResUNet():
 
     oxford = OxfordDataset(
@@ -717,7 +907,7 @@ def testResUNet():
 
     
     
-    bs, pn, d, fs = 1, 4096, 3, 1
+    bs, pn, d, fs = 16, 4096, 3, 1
     
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
@@ -733,7 +923,7 @@ def testResUNet():
     minknet_input = ME.SparseTensor(coordinates=coords, features=feats, device=device,  requires_grad=True)
 
     # 获取模型
-    model = MinkPyramid(in_channels=fs).to(device)
+    model = MinkPyramidDirect(in_channels=fs).to(device)
 
     minknet_output = model(minknet_input)
 

@@ -101,12 +101,11 @@ class ValTransform:
         if self.aug_mode == 1:
             # t = [RandomRotation(), JitterPoints(sigma=0.001, clip=0.002), RemoveRandomPoints(r=(0.0, 0.1)),
             #      RandomTranslation(max_delta=0.01), RemoveRandomBlock(p=0.4)]
-
             t = [
                 # so3旋转
-                # RandomRotation(),
+                RandomRotation(),
                 # z旋转
-                RandomRotation(max_theta2=0, axis=np.array([0, 0, 1])),
+                # RandomRotation(max_theta2=0, axis=np.array([0, 0, 1])),
             ]
         else:
             raise NotImplementedError('Unknown aug_mode: {}'.format(self.aug_mode))
@@ -127,8 +126,9 @@ class TrainTransform:
         self.aug_mode = aug_mode
         if self.aug_mode == 1:
             t = [
+                RandomRotation(),
                 # z轴旋转
-                RandomRotation(axis=np.array([0,0,1]), max_theta2=0), 
+                # RandomRotation(axis=np.array([0,0,1]), max_theta2=0), 
                 # # 绕z轴旋转
                 # RandomRotation(axis=np.array([0,0,1]), max_theta=180, max_theta2=0),
                 # # 绕x轴随机旋转10度以内
@@ -170,12 +170,13 @@ class TrainSetTransform:
         # 旋转在3个自由度均有发生
         # MinkLoc在这种情况下表现一般
         t = [
+            RandomRotation(),
             # 绕z轴旋转
-            RandomRotation(axis=np.array([0,0,1]), max_theta=180, max_theta2=0),
+            # RandomRotation(axis=np.array([0,0,1]), max_theta=180, max_theta2=0),
             # 绕x轴随机旋转10度以内
-            RandomRotation(axis=np.array([1,0,0]), max_theta=10, max_theta2=0), 
+            # RandomRotation(axis=np.array([1,0,0]), max_theta=10, max_theta2=0), 
             # 绕y轴随机旋转10度以内
-            RandomRotation(axis=np.array([0,1,0]), max_theta=10, max_theta2=0), 
+            # RandomRotation(axis=np.array([0,1,0]), max_theta=10, max_theta2=0), 
             # so3旋转
             # RandomRotation(),
             # RandomFlip([0.25, 0.25, 0])
@@ -385,3 +386,13 @@ class RemoveRandomBlock:
         return coords
 
 
+def test_pprdataset():
+    train_query_path="/nas/slam/datasets/PointNetVLAD/DataMinkLoc3D"
+    query_filename="training_queries_baseline.pickle"
+    dataset = OxfordDataset(train_query_path,query_filename, None, None)
+    for i in range(100):
+        print(dataset.queries[i].non_negatives)
+    return
+
+if __name__ == "__main__":
+    test_pprdataset()

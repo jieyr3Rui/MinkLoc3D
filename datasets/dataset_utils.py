@@ -14,16 +14,18 @@ from misc.utils import MinkLocParams
 def make_datasets(params: MinkLocParams, debug=False):
     # Create training and validation datasets
     datasets = {}
-    train_transform = TrainTransform(params.aug_mode)
-    train_set_transform = TrainSetTransform(params.aug_mode)
-
-    datasets['train'] = OxfordDataset(params.dataset_folder, params.train_file, train_transform,
+    train_transform = TrainTransform(1)
+    train_set_transform = TrainSetTransform(1)
+    # MinkLoc3D代码的BUG!!!!!!
+    # train_transform不行，传进去不知道是哪个变量
+    # transform=train_transform 要这样
+    datasets['train'] = OxfordDataset(params.dataset_folder, params.train_file, transform=train_transform,
                                       set_transform=train_set_transform)
 
     val_transform = ValTransform(params.aug_mode)
     # val_transform = None
     if params.val_file is not None:
-        datasets['val'] = OxfordDataset(params.dataset_folder, params.val_file, val_transform)
+        datasets['val'] = OxfordDataset(params.dataset_folder, params.val_file, transform=val_transform)
     return datasets
 
 
